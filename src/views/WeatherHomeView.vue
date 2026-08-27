@@ -6,6 +6,7 @@ import BaseDashboardCard from '../components/practices/weather/BaseDashboardCard
 import SearchBar from '../components/practices/weather/SearchBar.vue'
 import WeatherCard from '../components/practices/weather/WeatherCard.vue'
 import { useFavoriteStore } from '@/stores/favoriteStore'
+import { ElMessage } from 'element-plus'
 
 // ────────────────────────────────────────────
 // 1. useRouter - 스크립트 안에서 페이지를 이동시키는 라우터 인스턴스를 가져옴
@@ -133,6 +134,7 @@ watchEffect(() => {
 
 function selectCity(cityName) {
   selectedCityInfo.value = `${cityName}이 선택되었습니다.`
+  ElMessage.info(`${cityName} 선택됨`)
 }
 
 // ────────────────────────────────────────────
@@ -147,6 +149,12 @@ function handleDetailJump(cityId) {
 //    - Pinia store라서 이 페이지를 벗어나도(예: /stats로 이동) 값이 유지됨
 // ────────────────────────────────────────────
 const favoriteStore = useFavoriteStore()
+
+function handleToggleFavorite(cityName) {
+  const wasFavorite = favoriteStore.isFavorite(cityName)
+  favoriteStore.toggleFavorite(cityName)
+  ElMessage.success(wasFavorite ? `${cityName} 즐겨찾기 해제` : `⭐ ${cityName} 즐겨찾기 추가`)
+}
 
 const favoriteCityDetails = computed(() => {
   return weatherList.value.filter((city) => favoriteStore.isFavorite(city.name))
@@ -182,9 +190,21 @@ watch(
       </p>
 
       <BaseDashboardCard>
-        <p v-if="isLoading" class="loading-msg">🔄 실시간 날씨 데이터를 가져오는 중입니다...</p>
+        <!-- UI Library 추가 적용: 로딩 중일 때 텍스트 대신 el-skeleton으로 카드 뼈대를 6개 보여줌 -->
+        <div v-if="isLoading" class="card-grid">
+          <el-skeleton v-for="n in 6" :key="n" animated>
+            <template #template>
+              <div class="skeleton-card">
+                <el-skeleton-item variant="h3" style="width: 50%" />
+                <el-skeleton-item variant="text" style="width: 30%; margin-top: 8px" />
+                <el-skeleton-item variant="text" style="width: 60%; margin-top: 8px" />
+                <el-skeleton-item variant="button" style="width: 80px; margin-top: 12px" />
+              </div>
+            </template>
+          </el-skeleton>
+        </div>
+
         <div v-else-if="filteredWeatherList.length > 0" class="card-grid">
-          <!-- is-favorite / toggle-favorite 모두 favoriteStore 기준 -->
           <WeatherCard
             v-for="city in filteredWeatherList"
             :key="city.id"
@@ -192,7 +212,7 @@ watch(
             :is-favorite="favoriteStore.isFavorite(city.name)"
             @select-card="selectCity"
             @click-detail="handleDetailJump"
-            @toggle-favorite="favoriteStore.toggleFavorite"
+            @toggle-favorite="handleToggleFavorite"
           />
         </div>
         <p v-else class="no-result">"{{ searchQuery }}"와(과) 일치하는 도시가 없습니다.</p>
@@ -267,5 +287,12 @@ watch(
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 14px;
+}
+
+.skeleton-card {
+  background: white;
+  border: 1px solid #eaeef3;
+  border-radius: 14px;
+  padding: 16px;
 }
 </style>

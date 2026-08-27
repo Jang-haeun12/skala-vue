@@ -6,26 +6,15 @@ defineEmits(['update-query'])
 </script>
 
 <template>
-  <input
-    type="text"
-    class="search-box"
-    :value="currentQuery"
-    @input="$emit('update-query', $event.target.value)"
+  <!-- 기존 <input> 태그를 el-input으로 교체. el-input의 @input은 이벤트 객체가 아니라
+       입력된 문자열 값을 그대로 넘겨주므로 $event.target.value가 아니라 $event만 쓰면 됨 -->
+  <el-input
+    :model-value="currentQuery"
+    @input="$emit('update-query', $event)"
     placeholder="도시 이름을 입력하세요"
+    clearable
+    size="large"
   />
 </template>
 
-<style scoped>
-.search-box {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 10px 14px;
-  border: 1px solid #d5dbe3;
-  border-radius: 10px;
-  font-size: 14px;
-  outline: none;
-}
-.search-box:focus {
-  border-color: #2f6fed;
-}
-</style>
+<style scoped></style>
